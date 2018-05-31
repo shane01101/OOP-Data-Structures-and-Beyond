@@ -13,7 +13,9 @@ import de.fhpotsdam.unfolding.marker.Marker;
 import de.fhpotsdam.unfolding.marker.MultiMarker;
 import de.fhpotsdam.unfolding.providers.Google;
 import de.fhpotsdam.unfolding.providers.MBTilesMapProvider;
+import de.fhpotsdam.unfolding.providers.Microsoft;
 import de.fhpotsdam.unfolding.utils.MapUtils;
+import module6.EarthquakeMarker;
 import parsing.ParseFeed;
 import processing.core.PApplet;
 
@@ -71,6 +73,7 @@ public class EarthquakeCityMap extends PApplet {
 		}
 		else {
 			map = new UnfoldingMap(this, 200, 50, 650, 600, new Google.GoogleMapProvider());
+			//map = new UnfoldingMap(this, 200, 50, 700, 500, new Microsoft.HybridProvider());
 			// IF YOU WANT TO TEST WITH A LOCAL FILE, uncomment the next line
 		    //earthquakesURL = "2.5_week.atom";
 		}
@@ -105,7 +108,7 @@ public class EarthquakeCityMap extends PApplet {
 	    }
 
 	    // could be used for debugging
-	    printQuakes();
+	    //printQuakes();
 	 		
 	    // (3) Add markers to map
 	    //     NOTE: Country markers are not added to the map.  They are used
@@ -145,6 +148,17 @@ public class EarthquakeCityMap extends PApplet {
 	private void selectMarkerIfHover(List<Marker> markers)
 	{
 		// TODO: Implement this method
+		for(Marker m : markers)
+		{
+			CommonMarker cm = (CommonMarker)m;
+			
+			if(m.isInside(map, mouseX, mouseY) && lastSelected == null)
+			{
+				lastSelected = cm;
+				lastSelected.setSelected(true);
+				break;
+			}	
+		}
 	}
 	
 	/** The event handler for mouse clicks
@@ -158,6 +172,47 @@ public class EarthquakeCityMap extends PApplet {
 		// TODO: Implement this method
 		// Hint: You probably want a helper method or two to keep this code
 		// from getting too long/disorganized
+		if(lastClicked != null)
+		{
+			unhideMarkers();
+			lastClicked = null;
+		}
+		else
+		{
+			checkCitiesForClick();
+		}
+		
+	}
+	
+	private void checkCitiesForClick()
+	{
+		if (lastClicked != null) return;
+		// Loop over the earthquake markers to see if one of them is selected
+		for (Marker marker : cityMarkers) 
+		{
+			if (!marker.isHidden() && marker.isInside(map, mouseX, mouseY)) 
+			{
+				lastClicked = (CommonMarker)marker;
+				// Hide all the other earthquakes and hide
+				for (Marker mhide : cityMarkers) 
+				{
+					if (mhide != lastClicked) 
+					{
+						mhide.setHidden(true);
+					}
+				}
+				for (Marker mhide : quakeMarkers) 
+				{
+					EarthquakeMarker quakeMarker = (EarthquakeMarker)mhide;
+					
+					if (quakeMarker.getDistanceTo(marker.getLocation()) > quakeMarker.threatCircle()) 
+					{
+						quakeMarker.setHidden(true);
+					}
+				}
+				return;
+			}
+		}		
 	}
 	
 	
