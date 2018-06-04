@@ -15,6 +15,7 @@ import de.fhpotsdam.unfolding.marker.Marker;
 import de.fhpotsdam.unfolding.marker.MultiMarker;
 import de.fhpotsdam.unfolding.providers.Google;
 import de.fhpotsdam.unfolding.providers.MBTilesMapProvider;
+import de.fhpotsdam.unfolding.providers.Microsoft;
 import de.fhpotsdam.unfolding.utils.MapUtils;
 import parsing.ParseFeed;
 import processing.core.PApplet;
@@ -41,8 +42,6 @@ public class EarthquakeCityMap extends PApplet {
 	
 	/** This is where to find the local tiles, for working without an Internet connection */
 	public static String mbTilesString = "blankLight-1-3.mbtiles";
-	
-	
 
 	//feed with magnitude 2.5+ Earthquakes
 	private String earthquakesURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.atom";
@@ -66,6 +65,14 @@ public class EarthquakeCityMap extends PApplet {
 	private CommonMarker lastSelected;
 	private CommonMarker lastClicked;
 	
+	private boolean cityMarkerHidden = false;
+	private boolean landMarkerHidden = false;
+	private boolean oceanMarkerHidden = false;
+	private boolean shallowHidden = false;
+	private boolean intermediateHidden = false;
+	private boolean deepHidden = false;
+	private boolean recentHidden = false;
+	 
 	public void setup() {		
 		// (1) Initializing canvas and map tiles
 		size(900, 700, OPENGL);
@@ -74,7 +81,8 @@ public class EarthquakeCityMap extends PApplet {
 		    earthquakesURL = "2.5_week.atom";  // The same feed, but saved August 7, 2015
 		}
 		else {
-			map = new UnfoldingMap(this, 200, 50, 650, 600, new Google.GoogleMapProvider());
+			map = new UnfoldingMap(this, 200, 50, 700, 500, new Microsoft.HybridProvider());
+			//map = new UnfoldingMap(this, 200, 50, 650, 600, new Google.GoogleMapProvider());
 			// IF YOU WANT TO TEST WITH A LOCAL FILE, uncomment the next line
 		    //earthquakesURL = "2.5_week.atom";
 		}
@@ -210,6 +218,88 @@ public class EarthquakeCityMap extends PApplet {
 				checkCitiesForClick();
 			}
 		}
+		
+		//x = 25, y = 50
+		System.out.println(mouseX + " " + mouseY);
+
+		int[] cityMarkerIcon = {60, 100};
+		int[] landMarkerCenter = {60, 120};
+		int[] oceanMarkerCenter = {60, 140};
+		int[] shallowCenterIcon = {60, 190};
+		int[] intermediateCenterIcon = {60, 210};
+		int[] deepCenterIcon = {60, 230};
+		int[] recentXIcon = {60, 250};
+		int maxClickRadius = 7;
+		
+		if(getDistance(shallowCenterIcon[0], mouseX, shallowCenterIcon[1], mouseY) < maxClickRadius)
+		{
+			if(shallowHidden)
+				shallowHidden = false;
+			else
+				shallowHidden = true;
+			
+			isHiddenShallowMarkers(shallowHidden);
+		}
+		else if(getDistance(intermediateCenterIcon[0], mouseX, intermediateCenterIcon[1], mouseY) < maxClickRadius)
+		{
+			if(intermediateHidden)
+				intermediateHidden = false;
+			else
+				intermediateHidden = true;
+			
+			isHiddenIntermediateMarkers(intermediateHidden);
+		}
+		else if(getDistance(deepCenterIcon[0], mouseX, deepCenterIcon[1], mouseY) < maxClickRadius)
+		{
+			if(deepHidden)
+				deepHidden = false;
+			else
+				deepHidden = true;
+			
+			isHiddenDeepMarkers(deepHidden);
+		}
+		else if(getDistance(cityMarkerIcon[0], mouseX, cityMarkerIcon[1], mouseY) < maxClickRadius)
+		{
+			if(cityMarkerHidden)
+				cityMarkerHidden = false;
+			else
+				cityMarkerHidden = true;
+			
+			isHiddenCityMarkers(cityMarkerHidden);
+		}
+		else if(getDistance(landMarkerCenter[0], mouseX, landMarkerCenter[1], mouseY) < maxClickRadius)
+		{
+			if(landMarkerHidden)
+				landMarkerHidden = false;
+			else
+				landMarkerHidden = true;
+			
+			isHiddenLandMarkers(landMarkerHidden);
+		}
+		else if(getDistance(oceanMarkerCenter[0], mouseX, oceanMarkerCenter[1], mouseY) < maxClickRadius)
+		{
+			if(oceanMarkerHidden)
+				oceanMarkerHidden = false;
+			else
+				oceanMarkerHidden = true;
+			
+			isHiddenOceanMarkers(oceanMarkerHidden);
+		}
+		else if(getDistance(recentXIcon[0], mouseX, recentXIcon[1], mouseY) < maxClickRadius)
+		{
+			if(recentHidden)
+				recentHidden = false;
+			else
+				recentHidden = true;
+			
+			isHiddenRecentMarkers(recentHidden);
+		}
+		
+	}
+	
+	public double getDistance(int x0, int x1, int y0, int y1)
+	{
+		return Math.sqrt(Math.pow((x0-x1), 2) + Math.pow((y0-y1), 2));
 	}
 	
 	// Helper method that will check if a city marker was clicked on
@@ -274,6 +364,71 @@ public class EarthquakeCityMap extends PApplet {
 			
 		for(Marker marker : cityMarkers) {
 			marker.setHidden(false);
+		}
+	}
+	
+	private void isHiddenCityMarkers(boolean flag)
+	{
+		for(Marker marker : cityMarkers) {
+			marker.setHidden(flag);
+		}
+	}
+	
+	private void isHiddenLandMarkers(boolean flag)
+	{
+		for(Marker marker : quakeMarkers) {
+			EarthquakeMarker eqMarker = (EarthquakeMarker)marker;
+			if(eqMarker.isOnLand())
+				marker.setHidden(flag);
+		}
+	}
+	
+	private void isHiddenOceanMarkers(boolean flag)
+	{
+		for(Marker marker : quakeMarkers) {
+			EarthquakeMarker eqMarker = (EarthquakeMarker)marker;
+			if(!eqMarker.isOnLand())
+				marker.setHidden(flag);
+		}
+	}
+	
+	private void isHiddenShallowMarkers(boolean flag)
+	{
+		for(Marker marker : quakeMarkers) {
+			EarthquakeMarker eqMarker = (EarthquakeMarker)marker;
+
+			if(eqMarker.depthType == EarthquakeMarker.SHALLOW)
+				marker.setHidden(flag);
+		}
+	}
+
+	private void isHiddenIntermediateMarkers(boolean flag)
+	{
+		for(Marker marker : quakeMarkers) {
+			EarthquakeMarker eqMarker = (EarthquakeMarker)marker;
+
+			if(eqMarker.depthType == EarthquakeMarker.INTERMEDIATE)
+				marker.setHidden(flag);
+		}
+	}
+	
+	private void isHiddenDeepMarkers(boolean flag)
+	{
+		for(Marker marker : quakeMarkers) {
+			EarthquakeMarker eqMarker = (EarthquakeMarker)marker;
+
+			if(eqMarker.depthType == EarthquakeMarker.DEEP)
+				marker.setHidden(flag);
+		}
+	}
+	
+	private void isHiddenRecentMarkers(boolean flag)
+	{
+		for(Marker marker : quakeMarkers) {
+			EarthquakeMarker eqMarker = (EarthquakeMarker)marker;
+
+			if(eqMarker.isRecent )
+				marker.setHidden(flag);
 		}
 	}
 	

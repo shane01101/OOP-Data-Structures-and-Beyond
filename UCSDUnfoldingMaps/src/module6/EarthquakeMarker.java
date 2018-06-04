@@ -22,6 +22,7 @@ public abstract class EarthquakeMarker  extends CommonMarker implements Comparab
 	// using the thresholds below, or a continuous function
 	// based on magnitude. 
 	protected float radius;
+	protected String depthType = "";
 	
 	
 	// constants for distance
@@ -36,6 +37,10 @@ public abstract class EarthquakeMarker  extends CommonMarker implements Comparab
 	public static final float THRESHOLD_INTERMEDIATE = 70;
 	/** Greater than or equal to this threshold is a deep depth */
 	public static final float THRESHOLD_DEEP = 300;
+	public static final String SHALLOW = "Shallow";
+	public static final String INTERMEDIATE = "Intermediate";
+	public static final String DEEP = "DEEP";
+	public boolean isRecent;
 
 	// ADD constants for colors
 
@@ -95,7 +100,11 @@ public abstract class EarthquakeMarker  extends CommonMarker implements Comparab
 					x+radius+buffer, 
 					y-(radius+buffer));
 			
+			isRecent = true;
+			
 		}
+		else
+			isRecent = false;
 		
 		// reset to previous styling
 		pg.popStyle();
@@ -144,12 +153,16 @@ public abstract class EarthquakeMarker  extends CommonMarker implements Comparab
 		
 		if (depth < THRESHOLD_INTERMEDIATE) {
 			pg.fill(255, 255, 0);
+			depthType = SHALLOW;
 		}
 		else if (depth < THRESHOLD_DEEP) {
 			pg.fill(0, 0, 255);
+			depthType = INTERMEDIATE;
+			
 		}
 		else {
 			pg.fill(255, 0, 0);
+			depthType = DEEP;
 		}
 	}
 	
