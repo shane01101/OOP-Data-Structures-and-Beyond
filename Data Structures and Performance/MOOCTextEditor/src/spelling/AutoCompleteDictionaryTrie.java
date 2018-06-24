@@ -1,6 +1,7 @@
 package spelling;
 
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Collection;
 import java.util.HashMap;
@@ -40,7 +41,44 @@ public class AutoCompleteDictionaryTrie implements  Dictionary, AutoComplete {
 	public boolean addWord(String word)
 	{
 	    //TODO: Implement this method.
-	    return false;
+		String lowerWord = word.toLowerCase();
+		
+		TrieNode cur = root;
+		boolean isPresent = false;
+
+		int index = 0;
+		for(char c : lowerWord.toCharArray())
+		{
+			index++;
+			if(cur.getChild(c) != null)
+			{
+				cur = cur.getChild(c);
+				
+				//check if adding a word which is a subword of a word that already exists
+				if(index == lowerWord.length() && cur.getValidNextCharacters().size() > 0)
+				{
+					size++;
+					cur.setEndsWord(true);
+				}
+					
+			}
+			else
+			{
+				cur.insert(c);
+				cur = cur.getChild(c);	
+				isPresent = true;
+			}
+			
+		}
+		
+		//if inserted additional trie nodes
+		if(isPresent)
+		{
+			size++;
+			cur.setEndsWord(true);
+		}
+		
+		return isPresent;
 	}
 	
 	/** 
@@ -50,7 +88,7 @@ public class AutoCompleteDictionaryTrie implements  Dictionary, AutoComplete {
 	public int size()
 	{
 	    //TODO: Implement this method
-	    return 0;
+	    return size;
 	}
 	
 	
@@ -59,8 +97,19 @@ public class AutoCompleteDictionaryTrie implements  Dictionary, AutoComplete {
 	@Override
 	public boolean isWord(String s) 
 	{
-	    // TODO: Implement this method
-		return false;
+		String lowerWord = s.toLowerCase();
+		
+		TrieNode cur = root;
+
+		for(char c : lowerWord.toCharArray())
+		{
+			if(cur.getChild(c) != null)
+				cur = cur.getChild(c);
+			else
+				return false;
+		}
+		
+		return cur.endsWord();
 	}
 
 	/** 
@@ -100,8 +149,32 @@ public class AutoCompleteDictionaryTrie implements  Dictionary, AutoComplete {
     	 //       If it is a word, add it to the completions list
     	 //       Add all of its child nodes to the back of the queue
     	 // Return the list of completions
+    	 String lowerWord = prefix.toLowerCase();
+    	 TrieNode cur = root;
+    	 Queue<TrieNode> theQueue = new LinkedList<>();
+    	 List<String> completions = new LinkedList<>();
     	 
-         return null;
+    	 for(char c : lowerWord.toCharArray())
+    	 {
+    		 if(cur.getChild(c) != null)
+    			 cur = cur.getChild(c);
+    		 else
+    			 return completions;
+    	 }
+    	 
+    	 theQueue.add(cur);
+    	 
+    	 while(!theQueue.isEmpty() && completions.size() < numCompletions)
+    	 {
+    		 TrieNode top = theQueue.remove();
+    		 
+    		 if(top.endsWord())
+    			 completions.add(top.getText());
+    		 
+    		 for(char c : top.getValidNextCharacters())
+    			 theQueue.add(top.getChild(c));
+    	 }
+    	 return completions;
      }
 
  	// For debugging
@@ -117,6 +190,7 @@ public class AutoCompleteDictionaryTrie implements  Dictionary, AutoComplete {
  			return;
  		
  		System.out.println(curr.getText());
+ 		//System.out.println(curr.getText() + " " + curr.endsWord());
  		
  		TrieNode next = null;
  		for (Character c : curr.getValidNextCharacters()) {
