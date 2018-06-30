@@ -201,13 +201,12 @@ public class MapGraph {
 		List<GeographicPoint> path = new LinkedList<>();
 		GeographicPoint cur = goal;
 		
-		while((cur.getX() != start.getY()) && (cur.getX() != start.getY()))
+		while(!cur.equals(start))
 		{
 			path.add(0, cur);
 			cur = parent.get(cur);
 		}
 		path.add(0, start);
-		//path.add(0, cur);
 		return path;
 	}
 	
@@ -281,11 +280,11 @@ public class MapGraph {
 	
 	public static void main(String[] args)
 	{
-		System.out.print("Making a new map...");
-		MapGraph firstMap = new MapGraph();
-		System.out.print("DONE. \nLoading the map...");
-		GraphLoader.loadRoadMap("data/testdata/simpletest.map", firstMap);
-		System.out.println("DONE.");
+//		System.out.print("Making a new map...");
+//		MapGraph firstMap = new MapGraph();
+//		System.out.print("DONE. \nLoading the map...");
+//		GraphLoader.loadRoadMap("data/testdata/simpletest.map", firstMap);
+//		System.out.println("DONE.");
 //		
 //		// You can use this method for testing.  
 //		
@@ -294,16 +293,15 @@ public class MapGraph {
 //		GeographicPoint testEnd = new GeographicPoint(8.0, -1.0);
 //		System.out.println(firstMap.bfs(testStart, testEnd));
 //		
-		System.out.print("Making a new map...");
-		MapGraph testMap = new MapGraph();
-		System.out.print("DONE. \nLoading the map...");
-		GraphLoader.loadRoadMap("data/graders/mod2/map1.txt", testMap);
-		System.out.println("DONE.");
-//		
-//		testMap.printGraph();
-		GeographicPoint testStart2 = new GeographicPoint(0.0, 0.0);
-		GeographicPoint testEnd2 = new GeographicPoint(6.0, 6.0);
-		System.out.println(testMap.bfs(testEnd2, testStart2));
+//		System.out.print("Making a new map...");
+//		MapGraph testMap = new MapGraph();
+//		System.out.print("DONE. \nLoading the map...");
+//		GraphLoader.loadRoadMap("data/graders/mod2/map3.txt", testMap);
+//		System.out.println("DONE.");
+//
+//		GeographicPoint testStart2 = new GeographicPoint(0.0, 0.0);
+//		GeographicPoint testEnd2 = new GeographicPoint(1.0, 2.0);
+//		System.out.println(testMap.bfs(testEnd2, testStart2));
 		
 		/* Here are some test cases you should try before you attempt 
 		 * the Week 3 End of Week Quiz, EVEN IF you score 100% on the 
