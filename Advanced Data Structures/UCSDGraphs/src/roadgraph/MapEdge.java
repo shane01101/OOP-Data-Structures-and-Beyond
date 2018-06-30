@@ -7,17 +7,17 @@ public class MapEdge
 	GeographicPoint start;
 	GeographicPoint end;
 	String streetName;
-	double distance;
+	double length;
 	
-	public MapEdge(GeographicPoint a, GeographicPoint b, String s, double d)
+	public MapEdge(GeographicPoint a, GeographicPoint b, String s, double l)
 	{
 		start = a;
 		end = b;
 		streetName = s;
-		distance = d;
+		length = l;
 	}
 	
-	public double getDistance()
+	public double getLength()
 	{
 		return start.distance(end);
 		
@@ -35,6 +35,6 @@ public class MapEdge
 	
 	public String toString()
 	{
-		return start + " " + end + " " + streetName + " " + distance;
+		return start + " " + end + " " + streetName + " " + length;
 	}
 }

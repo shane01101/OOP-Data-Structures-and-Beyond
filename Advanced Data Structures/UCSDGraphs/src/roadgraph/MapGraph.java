@@ -9,11 +9,13 @@ package roadgraph;
 
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -150,12 +152,9 @@ public class MapGraph {
 	{
 		// TODO: Implement this method in WEEK 3
 		
-		// Hook for visualization.  See writeup.
-		//nodeSearched.accept(next.getLocation());
-		
-		Queue<GeographicPoint> theQueue = new LinkedList<GeographicPoint>();
-		HashMap<GeographicPoint, GeographicPoint> parent = new HashMap<GeographicPoint, GeographicPoint>();
-		HashSet<GeographicPoint> visited = new HashSet<GeographicPoint>();
+		Queue<GeographicPoint> theQueue = new LinkedList<>();
+		HashMap<GeographicPoint, GeographicPoint> parent = new HashMap<>();
+		HashSet<GeographicPoint> visited = new HashSet<>();
 		boolean found = false;
 		
 		theQueue.add(start);
@@ -189,7 +188,7 @@ public class MapGraph {
 			return null;
 
 		return calculatePath(start, goal, parent);
-	}
+	}	
 	
 	public List<GeographicPoint> calculatePath(GeographicPoint start, GeographicPoint goal, HashMap<GeographicPoint, GeographicPoint> parent)
 	{
@@ -234,15 +233,50 @@ public class MapGraph {
 	 *   start to goal (including both start and goal).
 	 */
 	public List<GeographicPoint> dijkstra(GeographicPoint start, 
-										  GeographicPoint goal, Consumer<GeographicPoint> nodeSearched)
+			  GeographicPoint goal, Consumer<GeographicPoint> nodeSearched)
 	{
 		// TODO: Implement this method in WEEK 4
-
-		// Hook for visualization.  See writeup.
-		//nodeSearched.accept(next.getLocation());
+		Queue<MapNode> theQueue = new PriorityQueue<>(new NodeComparator());
+		HashMap<GeographicPoint, GeographicPoint> parent = new HashMap<>();
+		HashSet<GeographicPoint> visited = new HashSet<>();
 		
+		MapNode theStart = vertices.get(start);
+		theStart.setDistance(0.0);
+		theQueue.add(theStart);
+		
+		while(!theQueue.isEmpty())
+		{
+			MapNode cur = theQueue.remove();
+			
+			if(!visited.contains(cur))
+			{
+				visited.add(cur.getLocation());
+				
+				if(cur.getLocation().equals(goal))
+					return calculatePath(start, goal, parent);
+				
+				MapNode n = vertices.get(cur.getLocation());
+				
+				for(MapEdge m : n.getEdges())
+				{
+					MapNode next = vertices.get(m.getEnd());
+					
+					if (!visited.contains(next.getLocation()))
+					{
+						if(cur.getDistance() +  m.getLength() < next.getDistance())
+						{
+							nodeSearched.accept(next.getLocation());
+							next.setDistance(cur.getDistance() +  m.getLength());
+							theQueue.add(next);
+							parent.put(m.getEnd(), m.getStart());
+						}
+					}
+				}
+			}
+		}
 		return null;
 	}
+	
 
 	/** Find the path from start to goal using A-Star search
 	 * 
@@ -269,10 +303,47 @@ public class MapGraph {
 											 GeographicPoint goal, Consumer<GeographicPoint> nodeSearched)
 	{
 		// TODO: Implement this method in WEEK 4
+		Queue<MapNode> theQueue = new PriorityQueue<>(new NodeComparatorWithHeuristic());
+		HashMap<GeographicPoint, GeographicPoint> parent = new HashMap<>();
+		HashSet<GeographicPoint> visited = new HashSet<>();
 		
-		// Hook for visualization.  See writeup.
-		//nodeSearched.accept(next.getLocation());
+		MapNode theStart = vertices.get(start);
+		theStart.setDistance(0.0);
+		theStart.setDistanceEstimate(0.0);
+		theQueue.add(theStart);
 		
+		while(!theQueue.isEmpty())
+		{
+			MapNode cur = theQueue.remove();
+			
+			if(!visited.contains(cur))
+			{
+				visited.add(cur.getLocation());
+				
+				if(cur.getLocation().equals(goal))
+					return calculatePath(start, goal, parent);
+				
+				MapNode n = vertices.get(cur.getLocation());
+				
+				for(MapEdge m : n.getEdges())
+				{
+					MapNode next = vertices.get(m.getEnd());
+					
+					if (!visited.contains(next.getLocation()))
+					{
+						if(cur.getDistance() + cur.getDistanceEstimate() +  m.getLength() < next.getDistance() + next.getDistanceEstimate())
+						{
+							nodeSearched.accept(next.getLocation());
+							next.setDistance(cur.getDistance() +  m.getLength());
+							next.setDistanceEstimate(next.getLocation().distance(goal));
+							double newDist = next.getLocation().distance(goal);
+							theQueue.add(next);
+							parent.put(m.getEnd(), m.getStart());
+						}
+					}
+				}
+			}
+		}
 		return null;
 	}
 
@@ -280,11 +351,18 @@ public class MapGraph {
 	
 	public static void main(String[] args)
 	{
-//		System.out.print("Making a new map...");
-//		MapGraph firstMap = new MapGraph();
-//		System.out.print("DONE. \nLoading the map...");
-//		GraphLoader.loadRoadMap("data/testdata/simpletest.map", firstMap);
-//		System.out.println("DONE.");
+		System.out.print("Making a new map...");
+		MapGraph firstMap = new MapGraph();
+		System.out.print("DONE. \nLoading the map...");
+		GraphLoader.loadRoadMap("data/testdata/simpletest.map", firstMap);
+		System.out.println("DONE.");
+		
+		GeographicPoint testStart = new GeographicPoint(1.0, 1.0);
+		GeographicPoint testEnd = new GeographicPoint(8.0, -1.0);
+		System.out.println("Dijkstra");
+		System.out.println(firstMap.dijkstra(testStart, testEnd));
+		System.out.println("A*");
+		System.out.println(firstMap.aStarSearch(testStart, testEnd));
 //		
 //		// You can use this method for testing.  
 //		
@@ -356,4 +434,32 @@ public class MapGraph {
 		
 	}
 	
+}
+
+class NodeComparator implements Comparator<MapNode>
+{
+	@Override
+	public int compare(MapNode m1, MapNode m2) 
+	{
+		if (m1.getDistance() < m2.getDistance())
+			return -1;
+		else if (m1.getDistance() > m2.getDistance())
+			return 1;
+		else 
+			return 0;
+	}
+}
+
+class NodeComparatorWithHeuristic implements Comparator<MapNode>
+{
+	@Override
+	public int compare(MapNode m1, MapNode m2) 
+	{
+		if (m1.getDistance() + m1.getDistanceEstimate() < m2.getDistance() + m2.getDistanceEstimate())
+			return -1;
+		else if (m1.getDistance() + m1.getDistanceEstimate() > m2.getDistance() + m2.getDistanceEstimate())
+			return 1;
+		else 
+			return 0;
+	}
 }
